@@ -22,7 +22,7 @@ if( test_not_successful )
 endif( test_not_successful )
 
 execute_process(
-   COMMAND ${CMAKE_COMMAND} -E compare_files ${expected_output} ${test_output}
+   COMMAND ${CMAKE_COMMAND} -E compare_files --ignore-eol ${expected_output} ${test_output}
    RESULT_VARIABLE compare_not_successful
 )
 
