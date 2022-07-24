@@ -132,6 +132,9 @@ typedef gintptr  intptr_t;
 #if defined(WIN32) &&  HAVE_WINDOWS_H
 #include <winsock2.h>
 #include <ws2tcpip.h>	/* Provides also socklen_t */
+#ifdef WITH_GLIB_STUBS
+#include "win32_glibstubs.h"
+#endif
 
 /* WIN32 special defines */
 #define STDIN_FILENO 0
@@ -157,7 +160,9 @@ typedef gintptr  intptr_t;
 #include <gmodule.h>
 #endif
 
+#ifndef WIN32
 #include <glib/gstdio.h>
+#endif
 
 /**
  * Macro used for safely accessing a message from a GError and using a default

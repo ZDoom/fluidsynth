@@ -268,4 +268,7 @@
 /* Define to 1 if you have the socklen_t type. */
 #cmakedefine HAVE_SOCKLEN_T @HAVE_SOCKLEN_T@
 
+/* Define if using glib stubs instead of real glib. */
+#cmakedefine WITH_GLIB_STUBS
+
 #endif /* CONFIG_H */

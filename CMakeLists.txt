@@ -68,6 +68,9 @@ option ( enable-portaudio "compile PortAudio support" off )
 option ( enable-profiling "profile the dsp code" off )
 option ( enable-trap-on-fpe "enable SIGFPE trap on Floating Point Exceptions" off )
 option ( enable-ubsan "compile and link against UBSan (for debugging fluidsynth internals)" off )
+if ( MSVC )
+    option ( enable-static-mscrt "use static MS Visual C++ runtime" off )
+endif ( MSVC )
 
 # Options enabled by default
 option ( enable-aufile "compile support for sound file output" on )
@@ -319,6 +322,10 @@ if ( WIN32 )
     set ( CMAKE_DEBUG_POSTFIX "_debug" )
   endif ( NOT MSVC )
 
+  if ( enable-static-msvcrt )
+    set ( CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" )
+  endif ( enable-static-msvcrt )
+
   # MinGW compiler (a Windows GCC port)
   if ( MINGW )
     set ( MINGW32 1 )
@@ -475,6 +482,7 @@ if ( ASTYLE )
     )
 endif(ASTYLE)
 
+if ( NOT WIN32 )
 find_package ( PkgConfig REQUIRED )
 
 # Mandatory libraries: glib and gthread
@@ -484,15 +492,42 @@ list( APPEND PC_REQUIRES_PRIV "glib-2.0" "gthread-2.0")
 if ( GLIB_glib-2.0_VERSION AND GLIB_glib-2.0_VERSION VERSION_LESS "2.26.0" )
     message ( WARNING "Your version of glib is very old. This may cause problems with fluidsynth's sample cache on Windows. Consider updating to glib 2.26 or newer!" )
 endif ( GLIB_glib-2.0_VERSION AND GLIB_glib-2.0_VERSION VERSION_LESS "2.26.0" )
+set ( WIN32_GLIBSTUBS OFF )
+set ( WITH_GLIB_STUBS 0 )
+else ( NOT WIN32 )
+    set ( WIN32_GLIBSTUBS ON )
+    set ( WITH_GLIB_STUBS 1 )
+endif ( NOT WIN32 )
 
 include ( PkgConfigHelpers ) # has unset_pkg_config()
+
+if ( NOT PkgConfig_FOUND )
+    set ( enable-pulseaudio OFF )
+    set ( enable-alsa OFF )
+    set ( enable-portaudio OFF )
+    set ( enable-jack OFF )
+    set ( enable-pipewire OFF )
+    set ( enable-lash OFF )
+    set ( enable-systemd OFF )
+    set ( enable-dbus OFF )
+    set ( enable-ladspa OFF )
+    set ( enable-libinstpatch OFF )
+    set ( enable-sdl2 OFF )
+    set ( enable-oboe OFF )
+    set ( enable-readline OFF )
+endif ( NOT PkgConfig_FOUND )
 
 # Optional features
 unset ( LIBSNDFILE_SUPPORT CACHE )
 unset ( LIBSNDFILE_HASVORBIS CACHE )
 if ( enable-libsndfile )
+if ( PkgConfig_FOUND )
 pkg_check_modules ( LIBSNDFILE sndfile>=1.0.0 IMPORTED_TARGET )
 set ( LIBSNDFILE_SUPPORT ${LIBSNDFILE_FOUND} )
+else ( PkgConfig_FOUND )
+    find_package(SndFile CONFIG)
+    set ( LIBSNDFILE_SUPPORT ${SNDFILE_FOUND} )
+endif ( PkgConfig_FOUND)
 if ( LIBSNDFILE_SUPPORT )
     #[[ cmake_print_variables (
     LIBSNDFILE_STATIC_LIBRARIES 
@@ -501,6 +536,7 @@ if ( LIBSNDFILE_SUPPORT )
         LIBSNDFILE_STATIC_LDFLAGS_OTHER )  ]]
     list( APPEND PC_REQUIRES_PRIV "sndfile")
     if ( LIBSNDFILE_STATIC_LIBRARIES MATCHES "vorbis" OR
+            SndFile_WITH_EXTERNAL_LIBS OR
             LIBSNDFILE_STATIC_LDFLAGS MATCHES "vorbis" OR
             LIBSNDFILE_STATIC_LDFLAGS_OTHER MATCHES "vorbis" )
         set ( LIBSNDFILE_HASVORBIS 1 )
@@ -835,9 +871,11 @@ else ()
   set ( includedir "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}" )
 endif ()
 
+if ( PkgConfig_FOUND )
 generate_pkgconfig_spec(fluidsynth.pc.in ${FluidSynth_BINARY_DIR}/fluidsynth.pc libfluidsynth-OBJ)
 install ( FILES ${FluidSynth_BINARY_DIR}/fluidsynth.pc
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig )
+endif(PkgConfig_FOUND)
 
 # Exported targets for cmake: find_package(FluidSynth)
 # when installed, use CMAKE_PREFIX_PATH=fluidsynth-prefix;...

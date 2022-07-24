@@ -246,6 +246,14 @@ else ( ENABLE_COVERAGE )
   set ( DEVEL_REPORT "${DEVEL_REPORT}  Coverage:              no\n" )
 endif ( ENABLE_COVERAGE )
 
+if ( MSVC )
+ if ( enable-static-msvcrt )
+  set ( DEVEL_REPORT "${DEVEL_REPORT}  Static MSVC Runtime:   yes\n" )
+ else ( enable-static-msvcrt )
+  set ( DEVEL_REPORT "${DEVEL_REPORT}  Static MSVC Runtime:   no\n" )
+ endif ( enable-static-msvcrt )
+endif ( MSVC )
+
 message( STATUS 
         "\n**************************************************************\n"
         "Build Summary:\n"

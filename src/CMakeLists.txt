@@ -182,6 +182,14 @@ set ( libfluidsynth_SOURCES
     bindings/fluid_ladspa.h
 )
 
+if ( WIN32_GLIBSTUBS )
+    set( libfluidsynth_SOURCES
+        ${libfluidsynth_SOURCES}
+        utils/win32_glibstubs.c
+        utils/win32_glibstubs.h
+    )
+endif ( WIN32_GLIBSTUBS )
+
 set ( public_HEADERS
     ${FluidSynth_SOURCE_DIR}/include/fluidsynth/audio.h
     ${FluidSynth_SOURCE_DIR}/include/fluidsynth/event.h
@@ -358,6 +366,11 @@ if ( TARGET PkgConfig::LIBSNDFILE AND LIBSNDFILE_SUPPORT )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::LIBSNDFILE )
 endif()
 
+if ( TARGET SndFile::sndfile AND LIBSNDFILE_SUPPORT )
+    target_include_directories ( libfluidsynth-OBJ PRIVATE ${SndFile_INCLUDE_DIR} )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC SndFile::sndfile )
+endif()
+
 if ( TARGET PkgConfig::PULSE AND PULSE_SUPPORT )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::PULSE )
 endif()
@@ -439,6 +452,10 @@ target_link_libraries ( libfluidsynth PRIVATE libfluidsynth-OBJ )
 # ************ CLI program ************
 
 set ( fluidsynth_SOURCES fluidsynth.c )
+
+if ( WIN32_GLIBSTUBS )
+    set ( fluidsynth_SOURCES ${fluidsynth_SOURCES} utils/win32_glibstubs.c )
+endif ( WIN32_GLIBSTUBS )
 
 if ( WASAPI_SUPPORT )
   set ( fluidsynth_SOURCES ${fluidsynth_SOURCES} fluid_wasapi_device_enumerate.c )
