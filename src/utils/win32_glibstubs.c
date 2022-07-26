@@ -213,26 +213,37 @@ GThread *fluid_g_thread_create(GThreadFunc func, void *data, BOOL joinable, GErr
 
     info->func = func;
     info->data = data;
-    info->handle = (HANDLE)_beginthreadex(NULL, 0, g_thread_wrapper, info, 0, NULL);
+
+    HANDLE thread = (HANDLE)_beginthreadex(NULL, 0, g_thread_wrapper, info, CREATE_SUSPENDED, NULL);
+
     if (error != NULL)
     {
-        error_container.code = errno;
+        error_container.code = thread ? 0 : errno;
         if (errno != 0)
         {
             error_container.message = strerror(errno);
         }
         *error = &error_container;
     }
-    if (info->handle == 0)
+
+    if (thread == NULL)
     {
         free(info);
         info = NULL;
     }
-    else if (!joinable)
+    else
     {
-        /* Release thread reference, if caller doesn't want to join */
-        CloseHandle(info->handle);
-        info->handle = NULL;
+        if (!joinable)
+        {
+            /* Release thread reference, if caller doesn't want to join */
+            CloseHandle(thread);
+            info->handle = NULL;
+        }
+        else
+        {
+            info->handle = thread;
+        }
+        ResumeThread(thread);
     }
     return info;
 }
